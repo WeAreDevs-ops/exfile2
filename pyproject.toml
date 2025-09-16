@@ -1,0 +1,19 @@
+
+[project]
+name = "repl-nix-workspace"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.12"
+dependencies = [
+    "browser-cookie3>=0.20.1",
+    "crypto>=1.4.1",
+    "discordwebhook>=1.0.3",
+    "httpx>=0.28.1",
+    "os-sys>=0.9.1",
+    "requests>=2.32.5",
+    "robloxpy>=0.2.21",
+    "nuitka>=2.0.0",
+    "ordered-set>=4.1.0",
+    "pycryptodome>=3.19.0",
+    "pywin32>=306"
+]
